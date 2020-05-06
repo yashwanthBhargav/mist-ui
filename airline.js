@@ -1,5 +1,33 @@
 console.clear();
 
+values = getValues();
+selectedValueFlight = "asa"
+
+  
+function getValues(){
+  var result = Object.keys(airlines).map(function (key) { 
+    return {"key": key, "value": airlines[key]}; 
+  }); 
+  return result;
+}
+
+function changeSelectedAirline(value){
+  if (selectedValueFlight != value) {
+    selectedValueFlight = value
+    chart.createChart('.chart');
+  }
+}
+
+if (this.values.length == 0) document.getElementById("category").innerHTML = "<option></option>";
+else {
+  var catOptions = "";
+  // console.log(this.values)
+  for (x=0; x < this.values.length; x++) {
+        catOptions += "<option value=" + this.values[x].key + ">" + this.values[x].value + "</option>";
+    }
+    document.getElementById("category").innerHTML = catOptions;
+}
+
 var chart = {
 
   element      : "",
@@ -9,17 +37,22 @@ var chart = {
   height       : 50,
   maxValue     : 0,
   values       : [],
+  selectedValue : "asa",
+  flights       : [],
   points       : [],
   vSteps       : 5,
   measurements : [],
 
-  getValues : function(){
-    for (var type in this.airlines) {
-      item = {};
-      item.type = type;
-      item.name = input[type];
-      values.push(item);
+  getFlights : function(){
+    var flightsData = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    for(x=0; x < flights_jan_01_2008.length; x++) {
+      var flight = flights_jan_01_2008[x]
+      if (flight && flight.airline && flight.time && flight.airline == selectedValueFlight && /\d{2}:\d{2}:\d{2}/.test(flight.time)) {
+        key = parseInt(flight.time.substring(0, 2))
+        flightsData[key] += 1;
+      }
     }
+    return flightsData;
   },
 
   calcMeasure : function(){
@@ -60,15 +93,16 @@ var chart = {
    *  - calc the vertical measurements
    * @param  {array} values - the values to plot on the chart
    */
-  createChart : function(element, values){
+  createChart : function(element){
+    console.log(selectedValueFlight)
   	this.getElement(element);
-  	this.values = values;
+  	this.flights = this.getFlights();
 
     // Do some calculations
     this.calcMaxValue();
     this.calcPoints();
     this.calcMeasure();
-    this.getValues();
+    // this.getValues();
     
     // Clear any existing
     this.element.innerHTML = "";
@@ -84,7 +118,7 @@ var chart = {
     this.polygon.setAttribute("points", this.points);
     this.polygon.setAttribute("class", "line");
   
-    if(this.values.length > 1){
+    if(this.flights.length > 1){
       var measurements = document.createElement("div");
       measurements.setAttribute("class", "chartMeasurements");
       for(x=0; x < this.measurements.length; x++){
@@ -108,15 +142,15 @@ var chart = {
    */
   calcPoints : function(){
     this.points = [];
-    if(this.values.length > 1){
+    if(this.flights.length > 1){
       // First point is bottom left hand side (max value is the bottom of graph)
       var points = "0," + chart.height + " ";
       // Loop through each value
-      for(x=0; x < this.values.length; x++){
+      for(x=0; x < this.flights.length; x++){
         // Calculate the perecentage of this value/the max value
-        var perc  = this.values[x] / this.maxValue;
+        var perc  = this.flights[x] / this.maxValue;
         // Steps is a percentage (100) / the total amount of values
-        var steps = 100 / ( this.values.length - 1 );
+        var steps = 100 / ( this.flights.length - 1 );
         // Create the point, limit points to 2 decimal points, 
         // Y co-ord is calculated by the taking the chart height, 
         // then subtracting (chart height * the percentage of this point)
@@ -131,8 +165,7 @@ var chart = {
       
      
     }
-    // output the values for display
-    document.getElementById("yourValues").innerHTML= this.values;
+
   },
   /**
    * Calculate Max Value
@@ -141,9 +174,9 @@ var chart = {
    */
   calcMaxValue : function(){
     this.maxValue = 0;
-    for(x=0; x < this.values.length; x++){
-      if(this.values[x] > this.maxValue){
-        this.maxValue = this.values[x];
+    for(x=0; x < this.flights.length; x++){
+      if(this.flights[x] > this.maxValue){
+        this.maxValue = this.flights[x];
       }
     }
     // Round up to next integer
@@ -158,7 +191,7 @@ function addValue(){
   var value = parseInt(input.value);
   
   if(!isNaN(value)){
-    values.push(value);
+    // values.push(value);
     chart.createChart('.chart',values);  
   } 
   
@@ -174,11 +207,8 @@ function clearChart(){
 
 
 
-chart.createChart('.chart',[5,10,15,30,1,3,5,20]);  
 
 
-
-
-
+chart.createChart('.chart');  
 
 

@@ -34,13 +34,13 @@ var chart = {
   chart        : "",
   polygon      : "",
   width        : 100,
-  height       : 50,
+  height       : 100,
   maxValue     : 0,
   values       : [],
   selectedValue : "asa",
   flights       : [],
   points       : [],
-  vSteps       : 5,
+  vSteps       : 24,
   measurements : [],
 
   getFlights : function(){
@@ -58,11 +58,9 @@ var chart = {
   calcMeasure : function(){
     this.measurements = [];
       for(x=0; x < this.vSteps; x++){
-        var measurement = Math.ceil((this.maxValue / this.vSteps) * (x +1));
+        var measurement = x < 10 ? "0" + x : x;
         this.measurements.push(measurement);
       }
-    
-    this.measurements.reverse();
   },
   /**
    * Get Element
@@ -180,7 +178,7 @@ var chart = {
       }
     }
     // Round up to next integer
-    this.maxValue = Math.ceil(this.maxValue);
+    this.maxValue = 20 ;
   }
 }
 

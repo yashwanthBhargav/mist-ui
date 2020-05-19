@@ -13,7 +13,7 @@ function getValues() {
 
 var input = document.getElementById("searchText");
 input.addEventListener("keyup", function (event) {
-  if (event.keyCode === 13 && input.value.trim() != "") {
+  if (event.keyCode == 13 && input.value.trim() != "") {
     event.preventDefault();
     changeSelectedAirline(input.value);
     input.value = "";
@@ -21,16 +21,18 @@ input.addEventListener("keyup", function (event) {
 });
 
 function searchMethod(value) {
-  for (var key in airlines) {
-    if (airlines[key].toLowerCase().includes(value.toLowerCase())) {
-      return key;
+  if (value && value != "") {
+    for (var key in airlines) {
+      if (airlines[key].toLowerCase().includes(value.toLowerCase())) {
+        return key;
+      }
     }
   }
   return "all";
 }
 
 function reset() {
-  changeSelectedAirline("zxcvv");
+  changeSelectedAirline("");
   input.value = "";
 }
 
@@ -49,43 +51,61 @@ var chart = {
   width: 100,
   height: 100,
   maxValue: 0,
-  selectedValue: "asa",
   flights: [],
-  points: [],
-  linePoints: [],
+  points: {
+    all: "",
+    asa: "",
+    aay: "",
+    aal: "",
+    dal: "",
+    fft: "",
+    hal: "",
+    jbu: "",
+    swa: "",
+    nks: "",
+    scx: "",
+    ual: "",
+    vrd: ""
+  },
+  linePoints: {
+    all: "",
+    asa: "",
+    aay: "",
+    aal: "",
+    dal: "",
+    fft: "",
+    hal: "",
+    jbu: "",
+    swa: "",
+    nks: "",
+    scx: "",
+    ual: "",
+    vrd: ""
+  },
+  dashArray: {
+    all: "",
+    asa: "",
+    aay: "",
+    aal: "",
+    dal: "",
+    fft: "",
+    hal: "",
+    jbu: "",
+    swa: "",
+    nks: "",
+    scx: "",
+    ual: "",
+    vrd: ""
+  },
   vSteps: 24,
   measurements: [],
   animate: "",
   date: "1 Jan 2008",
   totalFights: 0,
+  dataPoints: [],
 
   getFlights: function () {
-    var flightsData = [
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-    ];
+    var flightsData = Array(24).fill(0);
     this.totalFights = 0;
     for (x = 0; x < flights_jan_01_2008.length; x++) {
       var flight = flights_jan_01_2008[x];
@@ -93,9 +113,9 @@ var chart = {
         flight &&
         flight.airline &&
         flight.time &&
-        (selectedValueFlight === "all" ||
+        (selectedValueFlight == "all" ||
           flight.airline == selectedValueFlight) &&
-        /\d{2}:\d{2}:\d{2}/.test(flight.time)
+        /([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]/.test(flight.time)
       ) {
         key = parseInt(flight.time.substring(0, 2));
         flightsData[key] += 1;
@@ -125,11 +145,17 @@ var chart = {
   createChart: function (element) {
     console.log(selectedValueFlight);
     this.getElement(element);
-    this.flights = this.getFlights();
-
-    this.calcMaxValue();
-    this.calcPoints();
-    this.calcMeasure();
+    if (
+      !this.points[selectedValueFlight] ||
+      this.points[selectedValueFlight] == ""
+    ) {
+      this.flights = this.getFlights();
+      this.calcMaxValue();
+      this.calcPoints();
+    }
+    if (!this.measurements || this.measurements < 1) {
+      this.calcMeasure();
+    }
 
     this.element.innerHTML = "";
 
@@ -146,14 +172,14 @@ var chart = {
       "http://www.w3.org/2000/svg",
       "polygon"
     );
-    this.polygon.setAttribute("points", this.points);
+    this.polygon.setAttribute("points", this.points[selectedValueFlight]);
     this.polygon.setAttribute("class", "line");
 
     var line = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "polyline"
     );
-    line.setAttribute("points", this.linePoints);
+    line.setAttribute("points", this.linePoints[selectedValueFlight]);
 
     if (this.flights.length > 1) {
       var measurements = document.createElement("div");
@@ -173,7 +199,7 @@ var chart = {
 
       var name = document.getElementById("name");
       name.textContent =
-        selectedValueFlight === "all"
+        selectedValueFlight == "all"
           ? "All airlines"
           : airlines[selectedValueFlight];
 
@@ -181,14 +207,20 @@ var chart = {
       this.element.appendChild(this.chart);
       this.chart.appendChild(this.polygon);
       this.chart.appendChild(line);
+      for(x = 0; x < this.dataPoints.length; x++) {
+        this.chart.appendChild(this.dataPoints[x]);
+      }
       previousPoints = this.points;
     }
   },
   calcPoints: function () {
     if (this.flights.length > 1) {
+      this.dataPoints = [];
       var polygonPoints = "0," + chart.height + " ";
 
       var linePoints = "";
+
+      var dashArray = "6,6"
 
       polygonPoints +=
         "0," +
@@ -196,18 +228,35 @@ var chart = {
           2
         ) +
         " ";
+        
       for (x = 0; x < 24; x++) {
         var delta = this.width / 24;
+        console.log("delta", delta)
 
         var perc = this.flights[x] / this.maxValue;
- 
+
         var point =
           ((x + 0.5) * delta).toFixed(2) +
           "," +
           (this.height - this.height * perc).toFixed(2) +
           " ";
+        
+        if (x < 23) {
+          var dashHeight = perc - (this.flights[x + 1] / this.maxValue);
+          var dash = Math.sqrt(Math.pow(delta, 2) + Math.pow(dashHeight * this.height, 2)) * 5;
+          console.log("dash", dash.toFixed(2));
+          dashArray += "," + dash.toFixed(2) + ",6,6,6"
+        }
         polygonPoints += point;
         linePoints += point;
+
+        var data = document.createElementNS("http://www.w3.org/2000/svg",
+        "text");
+        data.innerHTML = this.flights[x];
+        data.setAttribute("x",((x + 0.5) * delta).toFixed(2) - 0.5);
+        data.setAttribute("y",(this.height - this.height * perc).toFixed(2) - 1);
+        data.setAttribute("class","textClass");
+        this.dataPoints.push(data);
       }
       polygonPoints +=
         "100," +
@@ -217,8 +266,9 @@ var chart = {
         ).toFixed(2) +
         " ";
       polygonPoints += "100," + this.height;
-      this.points = polygonPoints;
-      this.linePoints = linePoints;
+      this.points[selectedValueFlight] = polygonPoints;
+      this.linePoints[selectedValueFlight] = linePoints;
+      this.dashArray[selectedValueFlight] = dashArray;
     }
   },
   calcMaxValue: function () {
@@ -234,7 +284,6 @@ var chart = {
       this.maxValue += 50;
     }
   }
-
 };
 
 chart.createChart(".chart");

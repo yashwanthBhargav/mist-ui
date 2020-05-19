@@ -1,28 +1,35 @@
-<link rel="stylesheet" type="text/css" href="airline.css" />
-<div id="wrapper">
-  <div class="explanation">
-    <div class="top-left">
-      <span style="font-size: xx-large;font-weight: 600;">Airplane Flights</span>
-      <span>Data showing number of flights in 24 hours of a day</span>
+<!DOCTYPE html>
+<html class="page">
+  <head>
+    <title>Airplane Flights</title>
+  </head>
+  <body>
+    <link rel="stylesheet" type="text/css" href="airline.css" />
+    <div id="wrapper">
+      <div class="explanation">
+        <div class="top-left">
+          <span style="font-size: xx-large; font-weight: 600;"
+            >Airplane Flights</span
+          >
+          <span>Data showing number of flights in 24 hours of a day</span>
+        </div>
+        <div style="display: flex; flex-direction: column;">
+          <input id="searchText" placeholder="airline" value="" />
+          <button style="width: 50%; margin-top: 6px;" onCLick="reset()">
+            Reset
+          </button>
+        </div>
+      </div>
+      <div class="content">
+        <div id="info" class="info">
+          <span id="date" style="padding-right: 28px;"></span>
+          <span id="count"></span>
+          <span id="name" style="padding-left: 28px;"></span>
+        </div>
+        <div id="chart" class="chart"></div>
+      </div>
+      <script src="airline-data.js"></script>
+      <script src="airline.js"></script>
     </div>
-    <div style="display: flex; flex-direction: column;">
-      <input id="searchText" placeholder="airline" value="" />
-      <button
-        style="width: 50%; margin-top: 6px;"
-        onCLick="reset()"
-      >
-        Reset
-      </button>
-    </div>
-  </div>
-  <div class="content">
-    <div id="info" class="info">
-      <span id="date" style="padding-right: 28px;"></span>
-      <span id="count"></span>
-      <span id="name" style="padding-left: 28px;"></span>
-    </div>
-    <div id="chart" class="chart"></div>
-  </div>
-  <script src="airline-data.js"></script>
-  <script src="airline.js"></script>
-</div>
+  </body>
+</html>

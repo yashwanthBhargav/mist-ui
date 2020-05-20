@@ -104,4 +104,11 @@ h1 {
   font-size: 2px;
   letter-spacing: -0.25px;
   font-style: normal;
+  fill: #8c4242;
+}
+
+.circleClass {
+  fill: #45ca45;
+  stroke: white;
+  stroke-width: 0.25;
 }

@@ -3,6 +3,7 @@ console.clear();
 values = getValues();
 selectedValueFlight = "all";
 previousPoints = "";
+dataPointsSvg = [];
 
 function getValues() {
   var result = Object.keys(airlines).map(function (key) {
@@ -44,6 +45,24 @@ function changeSelectedAirline(value) {
   }
 }
 
+function onHover(event) {
+  var svg = document.getElementById("svg");
+  var box = svg.getBoundingClientRect();
+
+  var pos = Math.ceil((event.offsetX / box.width) * 24);
+  console.log("event", pos);
+  chart.showDataPoint(pos - 1);
+}
+
+function clearDataPoint() {
+  var data = document.getElementById("dataPoint");
+  var point = document.getElementById("pointCircle");
+  if (data) {
+    // data.remove();
+    // point.remove();
+  }
+}
+
 var chart = {
   element: "",
   chart: "",
@@ -51,7 +70,21 @@ var chart = {
   width: 100,
   height: 100,
   maxValue: 0,
-  flights: [],
+  flights: {
+    all: [],
+    asa: [],
+    aay: [],
+    aal: [],
+    dal: [],
+    fft: [],
+    hal: [],
+    jbu: [],
+    swa: [],
+    nks: [],
+    scx: [],
+    ual: [],
+    vrd: []
+  },
   points: {
     all: "",
     asa: "",
@@ -102,7 +135,7 @@ var chart = {
   animate: "",
   date: "1 Jan 2008",
   totalFights: 0,
-  dataPoints: [],
+  currentDataPoint: -100,
 
   getFlights: function () {
     var flightsData = Array(24).fill(0);
@@ -142,6 +175,16 @@ var chart = {
       console.error("Please select a valid element");
     }
   },
+  /**
+   * Create Chart
+   *  - calc the max value
+   *  - calc the points for the polygon
+   *  - create a chart <svg>
+   *  - set width, height, and viewbox attributes on <svg>
+   *  - create a <polygon>
+   *  - set points on <polygon>
+   *  - calc the vertical measurements
+   */
   createChart: function (element) {
     console.log(selectedValueFlight);
     this.getElement(element);
@@ -149,9 +192,11 @@ var chart = {
       !this.points[selectedValueFlight] ||
       this.points[selectedValueFlight] == ""
     ) {
-      this.flights = this.getFlights();
+      this.flights[selectedValueFlight] = this.getFlights();
       this.calcMaxValue();
       this.calcPoints();
+    } else {
+      this.calcMaxValue();
     }
     if (!this.measurements || this.measurements < 1) {
       this.calcMeasure();
@@ -160,6 +205,9 @@ var chart = {
     this.element.innerHTML = "";
 
     this.chart = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    this.chart.setAttribute("id", "svg");
+    this.chart.setAttribute("onmousemove", "onHover(event)");
+    this.chart.setAttribute("onmouseout", "clearDataPoint()");
     this.chart.setAttribute("width", "100%");
     this.chart.setAttribute("height", "100%");
     this.chart.setAttribute("preserveAspectRatio", "none");
@@ -181,7 +229,7 @@ var chart = {
     );
     line.setAttribute("points", this.linePoints[selectedValueFlight]);
 
-    if (this.flights.length > 1) {
+    if (this.flights[selectedValueFlight].length > 1) {
       var measurements = document.createElement("div");
       measurements.setAttribute("class", "chartMeasurements");
       for (x = 0; x < this.measurements.length; x++) {
@@ -207,62 +255,57 @@ var chart = {
       this.element.appendChild(this.chart);
       this.chart.appendChild(this.polygon);
       this.chart.appendChild(line);
-      for(x = 0; x < this.dataPoints.length; x++) {
-        this.chart.appendChild(this.dataPoints[x]);
-      }
       previousPoints = this.points;
     }
   },
   calcPoints: function () {
-    if (this.flights.length > 1) {
+    if (this.flights[selectedValueFlight].length > 1) {
       this.dataPoints = [];
+      dataPointsSvg = [];
       var polygonPoints = "0," + chart.height + " ";
 
       var linePoints = "";
 
-      var dashArray = "6,6"
+      var dashArray = "6,6";
 
       polygonPoints +=
         "0," +
-        (this.height - this.height * (this.flights[0] / this.maxValue)).toFixed(
-          2
-        ) +
+        (
+          this.height -
+          this.height * (this.flights[selectedValueFlight][0] / this.maxValue)
+        ).toFixed(2) +
         " ";
-        
+
       for (x = 0; x < 24; x++) {
         var delta = this.width / 24;
-        console.log("delta", delta)
+        console.log("delta", delta);
 
-        var perc = this.flights[x] / this.maxValue;
+        var perc = this.flights[selectedValueFlight][x] / this.maxValue;
 
         var point =
           ((x + 0.5) * delta).toFixed(2) +
           "," +
           (this.height - this.height * perc).toFixed(2) +
           " ";
-        
+
         if (x < 23) {
-          var dashHeight = perc - (this.flights[x + 1] / this.maxValue);
-          var dash = Math.sqrt(Math.pow(delta, 2) + Math.pow(dashHeight * this.height, 2)) * 5;
+          var dashHeight =
+            perc - this.flights[selectedValueFlight][x + 1] / this.maxValue;
+          var dash =
+            Math.sqrt(
+              Math.pow(delta, 2) + Math.pow(dashHeight * this.height, 2)
+            ) * 5;
           console.log("dash", dash.toFixed(2));
-          dashArray += "," + dash.toFixed(2) + ",6,6,6"
+          dashArray += "," + dash.toFixed(2) + ",6,6,6";
         }
         polygonPoints += point;
         linePoints += point;
-
-        var data = document.createElementNS("http://www.w3.org/2000/svg",
-        "text");
-        data.innerHTML = this.flights[x];
-        data.setAttribute("x",((x + 0.5) * delta).toFixed(2) - 0.5);
-        data.setAttribute("y",(this.height - this.height * perc).toFixed(2) - 1);
-        data.setAttribute("class","textClass");
-        this.dataPoints.push(data);
       }
       polygonPoints +=
         "100," +
         (
           this.height -
-          this.height * (this.flights[23] / this.maxValue)
+          this.height * (this.flights[selectedValueFlight][23] / this.maxValue)
         ).toFixed(2) +
         " ";
       polygonPoints += "100," + this.height;
@@ -273,15 +316,48 @@ var chart = {
   },
   calcMaxValue: function () {
     this.maxValue = 0;
-    for (x = 0; x < this.flights.length; x++) {
-      if (this.flights[x] > this.maxValue) {
-        this.maxValue = this.flights[x];
+    for (x = 0; x < this.flights[selectedValueFlight].length; x++) {
+      if (this.flights[selectedValueFlight][x] > this.maxValue) {
+        this.maxValue = this.flights[selectedValueFlight][x];
       }
     }
     if (this.maxValue < 100) {
       this.maxValue += 20;
     } else {
       this.maxValue += 50;
+    }
+  },
+  showDataPoint: function (measure) {
+    var data = document.getElementById("dataPoint");
+    var point = document.getElementById("pointCircle");
+    if (!data || measure != this.currentDataPoint) {
+      if (!data) {
+        var data = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "text"
+        );
+        data.setAttribute("id", "dataPoint");
+        data.setAttribute("class", "textClass");
+        this.chart.appendChild(data);
+
+        point = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "circle"
+        );
+        point.setAttribute("id", "pointCircle");
+        point.setAttribute("class", "circleClass");
+        point.setAttribute("r", "0.5");
+        this.chart.appendChild(point);
+      }
+      var delta = this.width / 24;
+      var perc = this.flights[selectedValueFlight][measure] / this.maxValue;
+      data.innerHTML = this.flights[selectedValueFlight][measure];
+      data.setAttribute("x", ((measure + 0.5) * delta).toFixed(2) - 1);
+      data.setAttribute("y", (this.height - this.height * perc).toFixed(2) - 3);
+      point.setAttribute("cx", ((measure + 0.5) * delta).toFixed(2));
+      point.setAttribute("cy", (this.height - this.height * perc).toFixed(2));
+
+      this.currentDataPoint = measure;
     }
   }
 };
